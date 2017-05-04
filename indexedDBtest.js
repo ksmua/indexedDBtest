@@ -8,66 +8,72 @@ if (!window.indexedDB) {
     window.alert("Ваш браузер не поддерживат стабильную версию IndexedDB. Такие-то функции будут недоступны");
 }
 
-// This is what our customer data looks like.
-const customerData = [
-  { ssn: "444-44-4444", name: "Bill", age: 35, email: "bill@company.com" },
-  { ssn: "555-55-5555", name: "Donna", age: 32, email: "donna@home.org" }
+var userData = [
+  { userID: "44444", name: "Vasia" },
+  { userID: "55555", name: "Vova" }
 ];
-const dbName = "the_name";
+const dbName = "ContactsDB";
 
-var request = indexedDB.open(dbName, 2);
+var request = indexedDB.open(dbName, 1);
 
-request.onerror = function(event) {
-  // Handle errors.
-};
 request.onupgradeneeded = function(event) {
   var db = event.target.result;
-
-  // Create an objectStore to hold information about our customers. We're
-  // going to use "ssn" as our key path because it's guaranteed to be
-  // unique.
-  var objectStore = db.createObjectStore("customers", { keyPath: "ssn" });
-
-  // Create an index to search customers by name. We may have duplicates
-  // so we can't use a unique index.
-  objectStore.createIndex("name", "name", { unique: false });
-
-  // Create an index to search customers by email. We want to ensure that
-  // no two customers have the same email, so use a unique index.
-  objectStore.createIndex("email", "email", { unique: true });
-
-  // Store values in the newly created objectStore.
-  for (var i in customerData) {
-    objectStore.add(customerData[i]);
+  if ( !db.objectStoreNames.contains("Contacts") ){
+    var store = db.createObjectStore("Contacts", { keyPath: "userID" });
   }
-};
+}
+
+request.onsuccess = function(event){
+  console.log("Success opened DB");
+  db = event.target.result;
+  showData();
+}
+
+request.onerror = function(event) {
+  console.log("Error on open DB");
+  console.log(event);
+}
+
 
 //=============================
 //Adding data to the database
 //=============================
-// Do something when all the data is added to the database.
-transaction.oncomplete = function(event) {
-  alert("All done!");
-};
-
-transaction.onerror = function(event) {
-  // Don't forget to handle errors!
-};
-
-var objectStore = transaction.objectStore("customers");
-for (var i in customerData) {
-  var request = objectStore.add(customerData[i]);
-  request.onsuccess = function(event) {
-    // event.target.result == customerData[i].ssn;
-  };
+function addContacts(){
+  // db = event.target.result;
+  var transaction = db.transaction(["Contacts"], "readwrite");
+  var store = transaction.objectStore("Contacts");
+  for (var i in userData) {
+    console.log("try to add userData");
+    var request = store.add(userData[i]);
+    
+    //onsuccess
+    request.onsuccess = function(event){
+      console.log("userAdded", userData[i]);
+    }
+    
+    //onerror
+    request.onerror = function(event){
+      console.log("error");
+      //console.log(event);
+      //console.log(event.target.error.name);
+    }
+  
+  }
 }
 
-//===============================
-//Removing data from the database
-//===============================
-var request = db.transaction(["customers"], "readwrite")
-                .objectStore("customers")
-                .delete("444-44-4444");
-request.onsuccess = function(event) {
-  // It's gone!
-};
+function showData(){
+  console.log("onsuccess - showData");
+}
+
+addContacts();
+
+
+// //===============================
+// //Removing data from the database
+// //===============================
+// var request = db.transaction(["Contacts"], "readwrite")
+//                 .objectStore("Contacts")
+//                 .delete("44444");
+// request.onsuccess = function(event) {
+//   console.log(" It's remove! ");
+// };
